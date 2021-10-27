@@ -14,7 +14,8 @@ function generateShapes() {
     initial: i === 0,
     exitLinked: i !== 4,
     initialLinked: i !== 0,
-    selected: false
+    selected: false,
+    color: "#56CCF2"
   }));
 }
 function generateBeziers(stars) {
@@ -43,7 +44,7 @@ function generateBeziers(stars) {
 const INITIAL_STATE = generateShapes();
 const INITIAL_BEZIERS = generateBeziers(INITIAL_STATE)
 
-const FlowDrawer = () => {
+const FlowDrawer = ({optionDraged}) => {
 	const [stars, setStars] = React.useState(INITIAL_STATE);
 	const [beziers, setBeziers] = React.useState(INITIAL_BEZIERS);
 
@@ -91,8 +92,21 @@ const FlowDrawer = () => {
       })
     );
   }
+  const onDropNew = (position) => {
+    setStars([...stars, {
+      id: Date.now().toString(),
+      isDragging: false,
+      initial: false,
+      exitLinked: false,
+      initialLinked: false,
+      selected: false,
+      x: position.x,
+      y: position.y,
+      color: optionDraged.color
+    }])
+  }
   return (
-    <DrawerContainer>
+    <DrawerContainer onDrop={onDropNew}>
       <Layer>
 				{beziers.map((bezier) => (
 					<Shape
@@ -121,7 +135,7 @@ const FlowDrawer = () => {
             id={star.id}
             x={star.x}
             y={star.y}
-            color="#56CCF2"
+            color={star.color}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
 						onDragMove={dragEvent}

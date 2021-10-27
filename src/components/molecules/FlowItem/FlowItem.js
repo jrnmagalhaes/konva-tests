@@ -35,7 +35,7 @@ const FlowItem = ({id, x, y, color, initial, selected, state, exitLinked, initia
         radius={MAIN_RADIUS}
         fill={color}
         onClick={onClickMain}
-        strokeWidth={selected?'2px':undefined}
+        strokeWidth={selected?2:undefined}
         stroke={selected?"#0220CC":undefined}
       />
       <Circle
