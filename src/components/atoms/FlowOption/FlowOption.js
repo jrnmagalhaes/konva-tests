@@ -2,9 +2,29 @@ import React from "react";
 import { MAIN_RADIUS } from "../../../utils/constants";
 
 const FlowOption = ({color, onDragStart}) => {
+  const flowOptionRef = React.useRef(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const onDrag = (e) => {
+    setIsDragging(true);
+    onDragStart();
+  }
+  const onDrop = (e) => {
+    setIsDragging(false);
+  }
   return (
-    <div draggable onDragStart={onDragStart} style={{...styles.container, backgroundColor: color}}>
-    </div>
+    <div
+      ref={flowOptionRef}
+      draggable
+      onDragStart={onDrag}
+      onDragEnd={onDrop}
+      style={{
+        ...styles.container,
+        backgroundColor: color,
+        borderWidth: isDragging?4:0,
+        borderColor: isDragging?'#ccc':undefined,
+        borderStyle: 'solid'
+      }}
+    />
   );
 };
 

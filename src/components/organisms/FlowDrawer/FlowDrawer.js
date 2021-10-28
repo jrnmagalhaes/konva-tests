@@ -47,6 +47,7 @@ const INITIAL_BEZIERS = generateBeziers(INITIAL_STATE)
 const FlowDrawer = ({optionDraged}) => {
 	const [stars, setStars] = React.useState(INITIAL_STATE);
 	const [beziers, setBeziers] = React.useState(INITIAL_BEZIERS);
+  const [temporaryBezier, setTemporaryBezier] = React.useState(null);
 
   const handleDragStart = (e) => {
     const id = e.target.id();
@@ -54,18 +55,23 @@ const FlowDrawer = ({optionDraged}) => {
       stars.map((star) => {
         return {
           ...star,
-          isDragging: star.id === id,
+          isDragging: star.id === id
         };
       })
     );
   };
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (id, position) => {
     setStars(
       stars.map((star) => {
-        return {
+        const toReturn = {
           ...star,
-          isDragging: false,
-        };
+          isDragging: false
+        }
+        if (star.id === id) {
+          toReturn.x = position.x;
+          toReturn.y = position.y;
+        }
+        return toReturn;
       })
     );
   };
@@ -93,7 +99,8 @@ const FlowDrawer = ({optionDraged}) => {
     );
   }
   const onDropNew = (position) => {
-    setStars([...stars, {
+    let newStars;
+    const newItem = {
       id: Date.now().toString(),
       isDragging: false,
       initial: false,
@@ -103,10 +110,48 @@ const FlowDrawer = ({optionDraged}) => {
       x: position.x,
       y: position.y,
       color: optionDraged.color
-    }])
+    };
+    if (temporaryBezier) {
+      newItem.initialLinked = true;
+      setBeziers([...beziers, {
+        ...temporaryBezier,
+        end: {
+          id: newItem.id,
+				  x: position.x - (LINK_RADIUS + LINK_DISTANCE + MAIN_RADIUS),
+          y: position.y
+        }
+      }])
+      setTemporaryBezier(null);
+    }
+    newStars = stars.map(star => ({
+      ...star,
+      exitLinked: star.exitLinked ? true : star.id === temporaryBezier?.start.id
+    }))
+    newStars.push(newItem);
+    setStars(newStars);
+  }
+  const onItemDrag = (position) => {
+    const star = stars.find(item => ((item.x <= position.x && position.x <= (item.x + 200)) && ((item.y - 100) <= position.y && position.y <= (item.y + 100))));
+    if (star) {
+      setTemporaryBezier({
+        id: Date.now(),
+        start: {
+          id: star.id,
+          x: star.x + LINK_DISTANCE + LINK_RADIUS + MAIN_RADIUS,
+          y: star.y,
+        },
+        end: {
+          id: null,
+          x: position.x - (MAIN_RADIUS),
+          y: position.y
+        }
+      })
+    } else {
+      setTemporaryBezier(null);
+    }
   }
   return (
-    <DrawerContainer onDrop={onDropNew}>
+    <DrawerContainer onDrop={onDropNew} onItemDrag={onItemDrag}>
       <Layer>
 				{beziers.map((bezier) => (
 					<Shape
@@ -129,6 +174,25 @@ const FlowDrawer = ({optionDraged}) => {
 						onClick={() => {console.log(bezier.id)}}
 					/>
 				))}
+        {temporaryBezier && <Shape
+						sceneFunc={(ctx, shape) => {
+							ctx.beginPath();
+							ctx.moveTo(temporaryBezier.start.x, temporaryBezier.start.y);
+							ctx.bezierCurveTo(
+								temporaryBezier.start.x + 50,
+								temporaryBezier.start.y,
+								temporaryBezier.end.x - 50,
+								temporaryBezier.end.y,
+								temporaryBezier.end.x,
+								temporaryBezier.end.y
+							);
+							ctx.fillStrokeShape(shape);
+						}}
+						stroke="#BCD6F9"
+						strokeWidth={4}
+						hitStrokeWidth={20}
+					/>
+        }
         {stars.map((star) => (
           <FlowItem
             key={star.id}

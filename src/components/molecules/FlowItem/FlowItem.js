@@ -7,6 +7,14 @@ const FlowItem = ({id, x, y, color, initial, selected, state, exitLinked, initia
   const onDrag = (e) => {
     onDragMove(e.target.attrs, initial);
   }
+  const onEndDrag = (e) => {
+    const {x, y} = e.target.attrs;
+    const position = {
+      x: initial ? x+MAIN_RADIUS : x+(MAIN_RADIUS+LINK_DISTANCE+(LINK_RADIUS*2)),
+      y: y + MAIN_RADIUS
+    }
+    onDragEnd(id, position)
+  }
   const onClickMain = (e) => {
     onClick(id);
   }
@@ -17,7 +25,7 @@ const FlowItem = ({id, x, y, color, initial, selected, state, exitLinked, initia
       y={y-MAIN_RADIUS}
       draggable
       onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      onDragEnd={onEndDrag}
       onDragMove={onDrag}
     >
       {!initial &&
