@@ -1,11 +1,25 @@
 import './App.css';
-import {FlowDrawerPage} from './components/pages';
+import { FlowDrawerPage, FormDrawerPage } from './components/pages';
+import { Header } from './components/atoms';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route
+} from "react-router-dom";
 
 function App() {
   return (
-    <div className="App">
-      <FlowDrawerPage/>
-    </div>
+    <Router>
+      <Header/>
+      <Switch>
+        <Route exact path='/'>
+          <FlowDrawerPage/>
+        </Route>
+        <Route exat path='/form'>
+          <FormDrawerPage/>
+        </Route>
+      </Switch>
+    </Router>
   );
 }
 

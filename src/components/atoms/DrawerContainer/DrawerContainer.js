@@ -11,15 +11,17 @@ const DrawerContainer = ({children, onDrop, onItemDrag}) => {
     onDrop(stageRef.current.getPointerPosition());
   }
 
+  //TODO: adiciona um debauncer nesse evento
   const onDragOver = (e) => {
     e.preventDefault();
     stageRef.current.setPointersPositions(e);
     onItemDrag(stageRef.current.getPointerPosition());
   }
 
+  //TODO: atualizar posição dos pontos no final do drag do stage
   return (
     <div onDragOver={onDragOver} onDrop={onDropEvent} style={{width: window.innerWidth - SIDEBAR_WIDTH, height: window.innerHeight - HEADER_SIZE}}>
-      <Stage ref={ref => (stageRef.current = ref)} style={styles.stageBackground} width={window.innerWidth - SIDEBAR_WIDTH} height={window.innerHeight - HEADER_SIZE}>
+      <Stage ref={ref => (stageRef.current = ref)} draggable style={styles.stageBackground} width={window.innerWidth - SIDEBAR_WIDTH} height={window.innerHeight - HEADER_SIZE}>
         {children}
       </Stage>
     </div>

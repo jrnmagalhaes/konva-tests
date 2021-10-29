@@ -1,10 +1,14 @@
 import React from "react";
 import { HEADER_SIZE } from '../../../utils/constants';
+import {
+  Link
+} from "react-router-dom";
 
 const Header = () => {
   return (
     <div style={style.header}>
-      <h1 style={style.h1}>Header</h1>
+      <Link style={style.link} to="/">Fluxo</Link>
+      <Link style={style.link} to="/form">form</Link>
     </div>
   );
 };
@@ -17,9 +21,8 @@ const style = {
     alignItems: 'center',
     paddingLeft: 10
   },
-  h1: {
-    margin: 0,
-    color: 'white'
+  link: {
+    marginRight: 10
   }
 }
 
