@@ -4,7 +4,8 @@ import { Stage } from 'react-konva';
 import { HEADER_SIZE, SIDEBAR_WIDTH } from "../../../utils/constants";
 
 const FormDrawerContainer = ({children, onDrop, onItemDrag, contentHeight}) => {
-  const stageRef = React.useRef(null)
+  const stageRef = React.useRef(null);
+  const containerRef = React.useRef(null);
   const [height, setHeight] = React.useState(window.innerHeight - HEADER_SIZE);
 
   React.useEffect(() => {
@@ -15,7 +16,8 @@ const FormDrawerContainer = ({children, onDrop, onItemDrag, contentHeight}) => {
 
   const onDropEvent = (e) => {
     stageRef.current.setPointersPositions(e);
-    onDrop(stageRef.current.getPointerPosition());
+    const position = stageRef.current.getPointerPosition();
+    onDrop({...position, y: position.y + containerRef.current.scrollTop});
   }
 
   //TODO: adiciona um debauncer nesse evento
@@ -25,7 +27,7 @@ const FormDrawerContainer = ({children, onDrop, onItemDrag, contentHeight}) => {
     onItemDrag(stageRef.current.getPointerPosition());
   }
   return (
-    <div onDragOver={onDragOver} onDrop={onDropEvent} style={{width: window.innerWidth - SIDEBAR_WIDTH, height: window.innerHeight - HEADER_SIZE, overflow: 'auto', overflowX: 'hidden'}}>
+    <div ref={containerRef} onDragOver={onDragOver} onDrop={onDropEvent} style={{width: window.innerWidth - SIDEBAR_WIDTH, height: window.innerHeight - HEADER_SIZE, overflow: 'auto', overflowX: 'hidden'}}>
       <Stage ref={ref => (stageRef.current = ref)} width={window.innerWidth - SIDEBAR_WIDTH} height={height}>
         {children}
       </Stage>
