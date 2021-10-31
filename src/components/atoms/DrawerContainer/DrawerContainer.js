@@ -8,6 +8,8 @@ const DrawerContainer = ({children, onDrop, onItemDrag}) => {
 
   const onDropEvent = (e) => {
     stageRef.current.setPointersPositions(e);
+    //TODO: utilizar o método abaixo para identificar uma interseção com um shape
+    console.log(stageRef.current.getIntersection(stageRef.current.getRelativePointerPosition()))
     onDrop(stageRef.current.getRelativePointerPosition());
   }
 

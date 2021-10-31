@@ -156,6 +156,7 @@ const FlowDrawer = ({optionDraged}) => {
 				{beziers.map((bezier) => (
 					<Shape
             key={`courve-id-${bezier.id}`}
+            id={`courve-id-${bezier.id}`}
 						sceneFunc={(ctx, shape) => {
 							ctx.beginPath();
 							ctx.moveTo(bezier.start.x, bezier.start.y);
