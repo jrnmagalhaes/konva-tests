@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React from "react";
-import { Stage } from 'react-konva';
+import { Stage, Star } from 'react-konva';
 import { HEADER_SIZE, SIDEBAR_WIDTH } from "../../../utils/constants";
 
 const FormDrawerContainer = ({children, onDrop, onItemDrag, contentHeight}) => {
@@ -15,8 +15,8 @@ const FormDrawerContainer = ({children, onDrop, onItemDrag, contentHeight}) => {
 
   const onDropEvent = (e) => {
     stageRef.current.setPointersPositions(e);
-    const position = stageRef.current.getPointerPosition();
-    onDrop({...position, y: position.y});
+    const shape = stageRef.current.getIntersection(stageRef.current.getRelativePointerPosition())
+    onDrop(stageRef.current.getPointerPosition(), shape);
   }
 
   //TODO: adiciona um debauncer nesse evento
