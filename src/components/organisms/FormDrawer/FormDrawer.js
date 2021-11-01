@@ -11,12 +11,8 @@ const FormDrawer = ({optionDraged}) => {
 
   const contentHeight = React.useMemo(() => (calculateHeight(items)), [items]);
 
-  React.useEffect(() => {
-    console.log("ITEMS: ", items);
-  }, [items]);
-
-
-  const onDropNewItem = (position, shape) => {
+  // TODO: corrigir bug no resize após um item virar uma coluna
+  const onDropNewItem = (shape) => {
     const newItem = {
       ...optionDraged,
       id: Date.now(),
@@ -27,8 +23,6 @@ const FormDrawer = ({optionDraged}) => {
       const relativePosition = shape.getRelativePointerPosition();
       // em caso de dúvida, olhar a formulação do id dentro do FormItem
       const [index, id, itemType, columnIndex] = shape.attrs.id.split('-');
-
-      console.log("COLUMN INDEX: ", columnIndex);
 
       // se estiver dentro de uma coluna, acessar o item dentro da coluna
       const overlapingItem = columnIndex ? items[columnIndex].items[index] : items[index];
@@ -122,11 +116,11 @@ const FormDrawer = ({optionDraged}) => {
         // finaliza a execução da inserção
         return;
       } else if (relativePosition.y < (shape.attrs.y + (shape.attrs.height*0.5))) { // item acima da posição
-        firstPart = items.slice(0, index);
-        secondPart = items.slice(index)
+        firstPart = items.slice(0, columnIndex ?? index);
+        secondPart = items.slice(columnIndex ?? index)
       } else { // adiciona abaixo
-        firstPart = items.slice(0, index + 1);
-        secondPart = items.slice(index + 1)
+        firstPart = items.slice(0, Number(columnIndex ?? index) + 1);
+        secondPart = items.slice(Number(columnIndex ?? index) + 1)
       }
       // array that will be the new state
       let toUpdate;

@@ -24,6 +24,7 @@ const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick}) 
         id={`${index}-${id}-colisionbox${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
         x={0}
         y={0}
+        fill={`${fill}55`}
         width={width}
         height={columnIndex ? height : (height + DISTANCE_BETWEEN_ELEMENTS) }
       />
