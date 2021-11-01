@@ -154,18 +154,11 @@ const FormDrawer = ({optionDraged}) => {
       firstPart.push(newItem);
       // atualiza a posição dos itens da parte final, levando em consideração os itens da mesma linha devem descer juntos
       const secondPartInitialHeight = newItem.y + newItem.height + DISTANCE_BETWEEN_ELEMENTS;
-      let isASequencie = false;
       for (let i = 0; i < secondPart.length; i++) {
-        const currentY = secondPart[i].y;
         if (i === 0) {
           secondPart[i].y = secondPartInitialHeight;
         } else {
-          secondPart[i].y = isASequencie ? secondPart[i-1].y : secondPart[i-1].y + secondPart[i-1].height + DISTANCE_BETWEEN_ELEMENTS;
-        }
-        if ( currentY === secondPart[i+1]?.y) {
-          isASequencie = true;
-        } else {
-          isASequencie = false;
+          secondPart[i].y = secondPart[i-1].y + secondPart[i-1].height + DISTANCE_BETWEEN_ELEMENTS;
         }
       }
 
