@@ -11,7 +11,50 @@ import { DISTANCE_BETWEEN_ELEMENTS } from "../../../utils/constants";
  *
  * Ou seja, ao splitar o index, se o array tive 4 posições, se trata de um item dentro de uma coluna
  */
-const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick}) => {
+const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick, hoverSide}) => {
+  const HOVERCOLOR = '#cccccccc'
+  const renderHover = () => {
+    switch (hoverSide) {
+      case 'left':
+        return <Rect
+          id={`${index}-${id}-hoverleft${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
+          x={0}
+          y={columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)}
+          fill={HOVERCOLOR}
+          width={DISTANCE_BETWEEN_ELEMENTS}
+          height={height}
+        />
+      case 'right':
+        return <Rect
+          id={`${index}-${id}-hoverright${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
+          x={width-DISTANCE_BETWEEN_ELEMENTS}
+          y={columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)}
+          fill={HOVERCOLOR}
+          width={DISTANCE_BETWEEN_ELEMENTS}
+          height={height}
+        />
+      case 'top':
+        return <Rect
+          id={`${index}-${id}-hovertop${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
+          x={0}
+          y={columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)}
+          fill={HOVERCOLOR}
+          width={width}
+          height={DISTANCE_BETWEEN_ELEMENTS}
+        />
+      case 'bottom':
+        return <Rect
+          id={`${index}-${id}-hoverbottom${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
+          x={0}
+          y={height - (DISTANCE_BETWEEN_ELEMENTS/2)}
+          fill={HOVERCOLOR}
+          width={width}
+          height={DISTANCE_BETWEEN_ELEMENTS}
+        />
+      default:
+        return null;
+    }
+  }
   return (
     <Group
       x={x}
@@ -24,7 +67,6 @@ const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick}) 
         id={`${index}-${id}-colisionbox${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
         x={0}
         y={0}
-        fill={`${fill}55`}
         width={width}
         height={columnIndex ? height : (height + DISTANCE_BETWEEN_ELEMENTS) }
       />
@@ -36,10 +78,10 @@ const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick}) 
         height={height}
         x={0}
         y={columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)}
-        onClick={(e) => {
-            console.log(`${index}-${id}-formitem${columnIndex !== undefined ? `-${columnIndex}` : ''}`)
-        }}
+        onClick={onClick}
       />
+      {/* Hovers */}
+      {renderHover()}
     </Group>
   );
 };

@@ -5,12 +5,20 @@ import { SIDEBAR_WIDTH, DISTANCE_BETWEEN_ELEMENTS, DRAWING_PADDING } from "../..
 
 const FormDrawer = ({optionDraged}) => {
   const TOTAL_WIDTH = (window.innerWidth - SIDEBAR_WIDTH - (DRAWING_PADDING * 2));
+  // isso é o tamanho em pixels que o algoritmo usa para reconhecer se o pointer está numa lateral de um shape
+  const SIZE_OF_SIDE_DROPS = 80;
   const [items, setItems] = React.useState([]);
+  const [hoveredElement, setHoveredElement] = React.useState({});
+
+  React.useEffect(() => {
+    setHoveredElement({})
+  }, [items])
 
   const calculateHeight = (arr) => arr.reduce((acc, current, i, arr) => (acc + (current.y !== arr[i-1]?.y ? current.height + DISTANCE_BETWEEN_ELEMENTS : 0)), 0)
 
   const contentHeight = React.useMemo(() => (calculateHeight(items)), [items]);
 
+  // TODO: clean up this shit
   const onDropNewItem = (shape) => {
     const newItem = {
       ...optionDraged,
@@ -28,9 +36,8 @@ const FormDrawer = ({optionDraged}) => {
       let firstPart;
       let secondPart;
 
-      // TODO: corrigir bug no posicionamento entre estruturas
       // aqui utilizamos as dimensões do shape na comparação porque se for uma coluna a altura do item não vai corresponder a altura de desenho
-      if (relativePosition.x < (shape.attrs.x + 50) ) { // criar coluna ou adicionar dentro da coluna:
+      if (relativePosition.x < (shape.attrs.x + SIZE_OF_SIDE_DROPS) ) { // criar coluna ou adicionar dentro da coluna:
         // adicionar novo item à esquerda do item que ele está sobrepondo
         if (columnIndex !== undefined) {
           // pega o array de itens dentro da coluna
@@ -85,7 +92,7 @@ const FormDrawer = ({optionDraged}) => {
         }
         // finaliza a execução da inserção
         return;
-      } else if (relativePosition.x > (shape.attrs.x + (shape.attrs.width - 50))) { // criar coluna ou adiciona dentro da coluna
+      } else if (relativePosition.x > (shape.attrs.x + (shape.attrs.width - SIZE_OF_SIDE_DROPS))) { // criar coluna ou adiciona dentro da coluna
         // adiciona item novo à direita do item que ele está sobrepondo
         if (columnIndex !== undefined) {
           // pega o array de itens dentro da coluna
@@ -172,6 +179,40 @@ const FormDrawer = ({optionDraged}) => {
     setItems([...items, newItem])
   }
 
+  const onDragOver = (shape) => {
+    if (shape) {
+      const relativePosition = shape.getRelativePointerPosition();
+      const [index, id, itemType, columnIndex] = shape.attrs.id.split('-');
+      if (relativePosition.x < (shape.attrs.x + SIZE_OF_SIDE_DROPS) ) {
+        setHoveredElement({
+          index: index,
+          columnIndex: columnIndex,
+          hoverSide: 'left'
+        })
+      } else if (relativePosition.x > (shape.attrs.width - SIZE_OF_SIDE_DROPS)) {
+        setHoveredElement({
+          index: index,
+          columnIndex: columnIndex,
+          hoverSide: 'right'
+        })
+      } else if (relativePosition.y < (shape.attrs.y + (shape.attrs.height*0.5))) {
+        setHoveredElement({
+          index: index,
+          columnIndex: columnIndex,
+          hoverSide: 'top'
+        })
+      } else {
+        setHoveredElement({
+          index: index,
+          columnIndex: columnIndex,
+          hoverSide: 'bottom'
+        })
+      }
+    } else {
+      setHoveredElement({})
+    }
+  }
+
   const renderColumnItems = (column, columnIndex) => {
     const item_width = ((TOTAL_WIDTH-(DISTANCE_BETWEEN_ELEMENTS * (column.items.length - 1)))/column.items.length);
     return column.items.map((item, index) =>
@@ -182,6 +223,7 @@ const FormDrawer = ({optionDraged}) => {
         x={((item_width+DISTANCE_BETWEEN_ELEMENTS) * (index) )}
         y={0}
         height={column.height}
+        hoverSide={((hoveredElement.index == index) && (columnIndex == hoveredElement.columnIndex)) ? hoveredElement.hoverSide : undefined}
         columnIndex={columnIndex}
         width={item_width}
         fill={item.color}
@@ -190,7 +232,7 @@ const FormDrawer = ({optionDraged}) => {
   }
 
   return (
-    <FormDrawerContainer onDrop={onDropNewItem} onItemDrag={() => {}} contentHeight={contentHeight}>
+    <FormDrawerContainer onDrop={onDropNewItem} onItemDrag={onDragOver} contentHeight={contentHeight}>
       <Layer>
         {items.map((item, index) =>
           item.type === 'formitem' ?
@@ -202,6 +244,7 @@ const FormDrawer = ({optionDraged}) => {
               y={item.y}
               height={item.height}
               width={TOTAL_WIDTH}
+              hoverSide={(hoveredElement.index == index && hoveredElement.columnIndex === undefined) ? hoveredElement.hoverSide : undefined}
               fill={item.color}
             />
             :

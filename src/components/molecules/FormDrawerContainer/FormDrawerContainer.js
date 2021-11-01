@@ -24,7 +24,8 @@ const FormDrawerContainer = ({children, onDrop, onItemDrag, contentHeight}) => {
   const onDragOver = (e) => {
     e.preventDefault();
     stageRef.current.setPointersPositions(e);
-    onItemDrag(stageRef.current.getPointerPosition());
+    const shape = stageRef.current.getIntersection(stageRef.current.getRelativePointerPosition())
+    onItemDrag(shape);
   }
 
   return (
