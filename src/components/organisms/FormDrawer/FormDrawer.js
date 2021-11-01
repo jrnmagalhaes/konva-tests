@@ -11,7 +11,6 @@ const FormDrawer = ({optionDraged}) => {
 
   const contentHeight = React.useMemo(() => (calculateHeight(items)), [items]);
 
-  // TODO: corrigir bug no resize após um item virar uma coluna
   const onDropNewItem = (shape) => {
     const newItem = {
       ...optionDraged,
@@ -41,22 +40,29 @@ const FormDrawer = ({optionDraged}) => {
           secondPart = newItems.slice(index);
           newItem.y = overlapingItem.y;
           newItems = [...firstPart, newItem, ...secondPart];
-          console.log(newItems);
+          const newHeight = newItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0)
           // atualiza o array de itens na coluna
           // atualiza o array de items geral com os novos dados da coluna.
-          setItems(items.map((item, index) => {
-            if (index == columnIndex) {
+          setItems(items.map((item, i) => {
+            if (i == columnIndex) {
               return {
                 ...item,
-                height: newItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0), //utiliza o maior height para a altura das colunas
+                height: newHeight, //utiliza o maior height para a altura das colunas
                 items: newItems
               }
+            } else if (i > columnIndex ) {
+              return {
+                ...item,
+                y: items[i-1].y + ((i == Number(columnIndex) + 1) ? newHeight : items[i-1].height) + DISTANCE_BETWEEN_ELEMENTS
+              }
             }
+
             return item;
           }))
         } else {
           newItem.y = overlapingItem.y;
           const columnIntems = [newItem, overlapingItem];
+          const newHeight = columnIntems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0)
           setItems(items.map((item, i) => {
             // essa comparação é apenas com dois == pois o index é em string e o i é em número
             if ( i == index ) {
@@ -65,8 +71,13 @@ const FormDrawer = ({optionDraged}) => {
                 type: 'column',
                 y: item.y,
                 x: item.x,
-                height: columnIntems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0), //utiliza o maior height para a altura das colunas
+                height: newHeight,
                 items: columnIntems
+              }
+            } else if (i > index) {
+              return {
+                ...item,
+                y: items[i-1].y + ((i == Number(index) + 1) ? newHeight : items[i-1].height) + DISTANCE_BETWEEN_ELEMENTS
               }
             }
             return item;
@@ -84,21 +95,29 @@ const FormDrawer = ({optionDraged}) => {
           secondPart = newItems.slice(index + 1);
           newItem.y = overlapingItem.y;
           newItems = [...firstPart, newItem, ...secondPart];
+          const newHeight = newItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0)
           // atualiza o array de itens na coluna
           // atualiza o array de items geral com os novos dados da coluna.
-          setItems(items.map((item, index) => {
-            if (index == columnIndex) {
+          setItems(items.map((item, i) => {
+            if (i == columnIndex) {
               return {
                 ...item,
-                height: newItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0), //utiliza o maior height para a altura das colunas
+                height: newHeight, //utiliza o maior height para a altura das colunas
                 items: newItems
               }
+            } else if (i > columnIndex ) {
+              return {
+                ...item,
+                y: items[i-1].y + ((i == Number(columnIndex) + 1) ? newHeight : items[i-1].height) + DISTANCE_BETWEEN_ELEMENTS
+              }
             }
+
             return item;
           }))
         } else {
           newItem.y = overlapingItem.y;
           const columnIntems = [overlapingItem, newItem];
+          const newHeight = columnIntems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0)
           setItems(items.map((item, i) => {
             // essa comparação é apenas com dois == pois o index é em string e o i é em número
             if ( i == index ) {
@@ -106,8 +125,13 @@ const FormDrawer = ({optionDraged}) => {
                 ...item,
                 id: Date.now(),
                 type: 'column',
-                height: columnIntems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0), //utiliza o maior height para a altura das colunas
+                height: newHeight,
                 items: columnIntems
+              }
+            } else if (i > index) {
+              return {
+                ...item,
+                y: items[i-1].y + ((i == Number(index) + 1) ? newHeight : items[i-1].height) + DISTANCE_BETWEEN_ELEMENTS
               }
             }
             return item;
