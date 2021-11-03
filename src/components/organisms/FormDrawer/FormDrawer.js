@@ -1,3 +1,4 @@
+// TODO: refator the ordering and the addition of new items to reuse code
 import React from "react";
 import { FormColumn, FormDrawerContainer, FormItem } from '../../molecules';
 import { Layer } from 'react-konva';
@@ -73,7 +74,6 @@ const FormDrawer = ({optionDraged}) => {
     }
   }
 
-  // TODO: clean up this shit
   const onDropNewItem = (shape) => {
     const newItem = {
       ...optionDraged,
@@ -166,6 +166,56 @@ const FormDrawer = ({optionDraged}) => {
   }
 
   /**
+   * Atualiza a posição y de todos os itens e das colunas também.
+   */
+  const reSizeItems = (newItems) => {
+    for (let i = 0; i < newItems.length; i++) {
+      newItems[i] = {
+        ...newItems[i],
+        y: i === 0 ? 0 : (newItems[i-1].y + newItems[i-1].height + DISTANCE_BETWEEN_ELEMENTS),
+        height: newItems[i].type === 'column' ? newItems[i].items.reduce((acc, item) => (item.height > acc ? item.height : acc), 0) : newItems[i].height
+      };
+    }
+    setItems(newItems);
+  }
+
+  /**
+   * Nessa função apenas estamos alocando o item na posição correta, não estamos ajustando nenhuma altura, nem nenhum posicionamento
+   */
+  const reOrderColumn = (newItem, items, index, columnIndex, position = 'left') => {
+    if (columnIndex) {
+      let newItems = [...items[columnIndex].items]
+      // adiciona o novo item na posição
+      const cutPosition = position === 'left' ? index : index + 1;
+      let firstPart = newItems.slice(0, cutPosition);
+      let secondPart = newItems.slice(cutPosition);
+      newItems = [...firstPart, newItem, ...secondPart];
+      // atualiza o array de itens na coluna
+      // atualiza o array de items geral com os novos dados da coluna.
+      return items.map((item, i) => {
+        if ( i === Number(columnIndex) ) {
+          return {
+            ...item,
+            items: newItems
+          }
+        }
+        return item;
+      })
+    } else {
+      return items.map( (item, i) => {
+        if (i === Number(index)) {
+          return {
+            id: Date.now(),
+            type: 'column',
+            items: position === 'left' ? [newItem, item] : [item, newItem]
+          }
+        }
+        return item
+      })
+    }
+  }
+
+  /**
    * Essa funçao vai receber o index e a coluna se for o caso e substituir onde o hoveredElement indicar que ele tem que cair.
    *
    * No caso de não existir um hovered element, verificar se a posição que ele foi jogado é maior que o valor de y do ultimo item + height do ultimo item,
@@ -173,14 +223,35 @@ const FormDrawer = ({optionDraged}) => {
    * um re-render).
    */
   const onDropReorder = (index, columnIndex) => {
-    console.log('chamou?');
-    const itemToReorder = columnIndex ? items[columnIndex].items[index] : items[index];
+    const itemToReorder = columnIndex !== undefined ? items[columnIndex].items[index] : items[index];
+    // remove o item de onde ele estava
+    let newItems
+    if (columnIndex !== undefined) {
+      newItems = items.map((item, i) => {
+        if (i === Number(columnIndex)) {
+          // isso é para desconstruir a coluna caso necessário
+          item.items = item.items.filter((_, insideItemIndex) => insideItemIndex !== Number(index))
+          if (item.items.length === 1) {
+            return item.items[0];
+          }
+          return item;
+        }
+        return item;
+      })
+    } else {
+      newItems = items.filter((item, i) => i !== index);
+    }
+
     // se existe um item sendo sobreposto
     if (hoveredElement.index) {
       switch (hoveredElement.hoverSide) {
         case 'left':
+          newItems = reOrderColumn(itemToReorder, newItems, hoveredElement.index, hoveredElement.columnIndex, 'left')
+          reSizeItems(newItems);
           return;
         case 'right':
+          newItems = reOrderColumn(itemToReorder, newItems, hoveredElement.index, hoveredElement.columnIndex, 'right')
+          reSizeItems(newItems);
           return;
         case 'top':
           return;
@@ -190,6 +261,8 @@ const FormDrawer = ({optionDraged}) => {
           return;
       }
     }
+
+
   }
 
   const renderColumnItems = (column, columnIndex) => {
