@@ -13,6 +13,7 @@ const FormDrawer = ({optionDraged}) => {
   const [hoveredElement, setHoveredElement] = React.useState({});
 
   React.useEffect(() => {
+    console.log("Items: ", items);
     setHoveredElement({})
   }, [items])
 
@@ -183,7 +184,7 @@ const FormDrawer = ({optionDraged}) => {
    * Nessa função apenas estamos alocando o item na posição correta, não estamos ajustando nenhuma altura, nem nenhum posicionamento
    */
   const reOrderColumn = (newItem, items, index, columnIndex, position = 'left') => {
-    if (columnIndex) {
+    if (columnIndex && items[columnIndex].type === 'column') {
       let newItems = [...items[columnIndex].items]
       // adiciona o novo item na posição
       const cutPosition = position === 'left' ? index : index + 1;
@@ -215,6 +216,16 @@ const FormDrawer = ({optionDraged}) => {
     }
   }
 
+  const addItemInPosition = (newItem, items, newIndex, position = 'top') => {
+    const cutPosition = (newIndex + (position === 'top') ? 0 : 1 );
+    console.log(cutPosition);
+    const firstPart = items.slice(0, cutPosition);
+    const secondPart = items.slice(cutPosition);
+    firstPart.push(newItem);
+
+    return firstPart.concat(secondPart);
+  }
+
   /**
    * Essa funçao vai receber o index e a coluna se for o caso e substituir onde o hoveredElement indicar que ele tem que cair.
    *
@@ -244,6 +255,7 @@ const FormDrawer = ({optionDraged}) => {
 
     // se existe um item sendo sobreposto
     if (hoveredElement.index) {
+      let newIndex;
       switch (hoveredElement.hoverSide) {
         case 'left':
           newItems = reOrderColumn(itemToReorder, newItems, hoveredElement.index, hoveredElement.columnIndex, 'left')
@@ -254,8 +266,20 @@ const FormDrawer = ({optionDraged}) => {
           reSizeItems(newItems);
           return;
         case 'top':
+          newIndex = Number(hoveredElement.columnIntems ?? hoveredElement.index);
+          if (Number(index) < newIndex) {
+            newIndex -= newIndex;
+          }
+          newItems = addItemInPosition({...itemToReorder}, newItems, newIndex, 'top')
+          reSizeItems(newItems);
           return;
         case 'bottom':
+          newIndex = Number(hoveredElement.columnIntems ?? hoveredElement.index);
+          if (Number(index) < newIndex) {
+            newIndex -= newIndex;
+          }
+          newItems = addItemInPosition({...itemToReorder}, newItems, newIndex, 'bottom')
+          reSizeItems(newItems);
           return;
         default:
           return;
