@@ -7,16 +7,10 @@ const FormColumn = ({id, index, x, y, width, height, children}) => {
     <Group
       x={x}
       y={y}
+      // id={`${index}-${id}-column`}
       width={width}
       height={height + DISTANCE_BETWEEN_ELEMENTS}
     >
-      <Rect
-        x={0}
-        y={0}
-        id={`${index}-${id}-column`}
-        width={width}
-        height={height + DISTANCE_BETWEEN_ELEMENTS}
-      />
       {children}
     </Group>
   );
