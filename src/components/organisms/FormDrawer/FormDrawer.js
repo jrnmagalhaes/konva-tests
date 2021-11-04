@@ -52,10 +52,11 @@ const FormDrawer = ({optionDraged}) => {
     } else {
       newItem.y = overlapingItem.y;
       const columnItems = position === 'left' ? [newItem, overlapingItem] : [overlapingItem, newItem];
-      const newHeight = columnItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0)
+      const newHeight = columnItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0);
+      let currentHeight = 0;
       setItems(items.map((item, i) => {
-        // essa comparação é apenas com dois == pois o index é em string e o i é em número
         if ( i === Number(index) ) {
+          currentHeight = item.y+newHeight+DISTANCE_BETWEEN_ELEMENTS;
           return {
             id: Date.now(),
             type: 'column',
@@ -65,10 +66,12 @@ const FormDrawer = ({optionDraged}) => {
             items: columnItems
           }
         } else if (i > index) {
-          return {
+          const toReturn = {
             ...item,
-            y: items[i-1].y + ((i === (Number(index) + 1)) ? newHeight : items[i-1].height) + DISTANCE_BETWEEN_ELEMENTS
+            y: currentHeight
           }
+          currentHeight += item.height + DISTANCE_BETWEEN_ELEMENTS
+          return toReturn
         }
         return item;
       }))
