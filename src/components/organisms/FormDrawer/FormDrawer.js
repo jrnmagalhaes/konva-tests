@@ -51,8 +51,8 @@ const FormDrawer = ({optionDraged}) => {
       }))
     } else {
       newItem.y = overlapingItem.y;
-      const columnIntems = position === 'left' ? [newItem, overlapingItem] : [overlapingItem, newItem];
-      const newHeight = columnIntems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0)
+      const columnItems = position === 'left' ? [newItem, overlapingItem] : [overlapingItem, newItem];
+      const newHeight = columnItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0)
       setItems(items.map((item, i) => {
         // essa comparação é apenas com dois == pois o index é em string e o i é em número
         if ( i === Number(index) ) {
@@ -62,7 +62,7 @@ const FormDrawer = ({optionDraged}) => {
             y: item.y,
             x: item.x,
             height: newHeight,
-            items: columnIntems
+            items: columnItems
           }
         } else if (i > index) {
           return {
@@ -216,11 +216,9 @@ const FormDrawer = ({optionDraged}) => {
     }
   }
 
-  const addItemInPosition = (newItem, items, newIndex, position = 'top') => {
-    const cutPosition = (newIndex + (position === 'top') ? 0 : 1 );
-    console.log(cutPosition);
-    const firstPart = items.slice(0, cutPosition);
-    const secondPart = items.slice(cutPosition);
+  const addItemInPosition = (newItem, items, newIndex) => {
+    const firstPart = items.slice(0, newIndex);
+    const secondPart = items.slice(newIndex);
     firstPart.push(newItem);
 
     return firstPart.concat(secondPart);
@@ -266,19 +264,14 @@ const FormDrawer = ({optionDraged}) => {
           reSizeItems(newItems);
           return;
         case 'top':
-          newIndex = Number(hoveredElement.columnIntems ?? hoveredElement.index);
-          if (Number(index) < newIndex) {
-            newIndex -= newIndex;
-          }
-          newItems = addItemInPosition({...itemToReorder}, newItems, newIndex, 'top')
+          newIndex = Number(hoveredElement.columnIndex ?? hoveredElement.index);
+          newItems = addItemInPosition({...itemToReorder}, newItems, newIndex)
           reSizeItems(newItems);
           return;
         case 'bottom':
-          newIndex = Number(hoveredElement.columnIntems ?? hoveredElement.index);
-          if (Number(index) < newIndex) {
-            newIndex -= newIndex;
-          }
-          newItems = addItemInPosition({...itemToReorder}, newItems, newIndex, 'bottom')
+          newIndex = Number(hoveredElement.columnIndex ?? hoveredElement.index);
+          if (newItems.length === items.length) newIndex += 1;
+          newItems = addItemInPosition({...itemToReorder}, newItems, newIndex)
           reSizeItems(newItems);
           return;
         default:

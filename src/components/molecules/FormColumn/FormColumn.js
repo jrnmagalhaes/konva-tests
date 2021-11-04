@@ -1,5 +1,5 @@
 import React from "react";
-import { Rect, Group } from 'react-konva';
+import { Group } from 'react-konva';
 import { DISTANCE_BETWEEN_ELEMENTS } from "../../../utils/constants";
 
 const FormColumn = ({id, index, x, y, width, height, children}) => {
