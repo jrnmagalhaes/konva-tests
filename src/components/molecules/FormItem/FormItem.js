@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React from "react";
 import { Rect, Group } from 'react-konva';
 import { DISTANCE_BETWEEN_ELEMENTS } from "../../../utils/constants";
@@ -14,7 +15,16 @@ import { Portal } from 'react-konva-utils';
  */
 const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick, hoverSide, onDragMove, onDragEnd}) => {
   const [isDragging, setIsDragging] = React.useState(false);
+  const rectRef = React.useRef(null);
   const HOVERCOLOR = '#cccccccc';
+
+  React.useEffect(() => {
+    rectRef.current.position({
+      x: 0,
+      y: columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)
+    })
+  }, [x, y])
+
   const renderHover = () => {
     if (isDragging) return null;
     switch (hoverSide) {
@@ -71,7 +81,8 @@ const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick, h
     }
   }
 
-  const dragEnd = () => {
+  const dragEnd = (e) => {
+    console.log("absolute position: ", e.target.absolutePosition())
     setIsDragging(false);
     onDragEnd(index, columnIndex);
   }
@@ -100,6 +111,7 @@ const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick, h
           width={width}
           height={height}
           draggable
+          ref={rectRef}
           x={0}
           y={columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)}
           opacity={isDragging?0.8:1}
