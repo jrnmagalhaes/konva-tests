@@ -3,6 +3,7 @@ import React from "react";
 import { Rect, Group } from 'react-konva';
 import { DISTANCE_BETWEEN_ELEMENTS } from "../../../utils/constants";
 import { Portal } from 'react-konva-utils';
+import { Section } from "../../atoms";
 
 /**
  * Basicamente isso agrupa o item a uma colision box, se o item estiver dentro de uma estrutura de colunas, o item vai ficar exatamente em cima da colision box.
@@ -13,7 +14,7 @@ import { Portal } from 'react-konva-utils';
  *
  * Ou seja, ao splitar o index, se o array tive 4 posições, se trata de um item dentro de uma coluna
  */
-const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick, hoverSide, onDragMove, onDragEnd}) => {
+const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick, hoverSide, onDragMove, onDragEnd, type}) => {
   const [isDragging, setIsDragging] = React.useState(false);
   const rectRef = React.useRef(null);
   const HOVERCOLOR = '#cccccccc';
@@ -82,9 +83,44 @@ const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick, h
   }
 
   const dragEnd = (e) => {
-    console.log("absolute position: ", e.target.absolutePosition())
     setIsDragging(false);
     onDragEnd(index, columnIndex);
+  }
+
+  const renderBasedOnType = () => {
+    switch (type) {
+      case 'section':
+        return <Section
+          id={`${index}-${id}-${type}${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
+          width={width}
+          height={height}
+          draggable
+          ref={rectRef}
+          x={0}
+          y={columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)}
+          opacity={isDragging?0.8:1}
+          onClick={onClick}
+          onDragStart={() => {setIsDragging(true)}}
+          onDragMove={onDrag}
+          onDragEnd={dragEnd}
+        />
+      default:
+        return <Rect
+          id={`${index}-${id}-formitem${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
+          fill={fill}
+          width={width}
+          height={height}
+          draggable
+          ref={rectRef}
+          x={0}
+          y={columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)}
+          opacity={isDragging?0.8:1}
+          onClick={onClick}
+          onDragStart={() => {setIsDragging(true)}}
+          onDragMove={onDrag}
+          onDragEnd={dragEnd}
+        />;
+    }
   }
 
   return (
@@ -103,23 +139,9 @@ const FormItem = ({id, index, x, y, width, height, fill, columnIndex, onClick, h
         width={width}
         height={columnIndex ? height : (height + DISTANCE_BETWEEN_ELEMENTS) }
       />
-      {/* Esse é a representação do item de fato */}
+      {/* Esse portal é para trazer o item para frente quando estiver no estado de drag */}
       <Portal id={`${index}-${id}-group${columnIndex !== undefined ? `-${columnIndex}` : ''}`} selector=".top-layer" enabled={isDragging}>
-        <Rect
-          id={`${index}-${id}-formitem${columnIndex !== undefined ? `-${columnIndex}` : ''}`}
-          fill={fill}
-          width={width}
-          height={height}
-          draggable
-          ref={rectRef}
-          x={0}
-          y={columnIndex ? 0 : (DISTANCE_BETWEEN_ELEMENTS/2)}
-          opacity={isDragging?0.8:1}
-          onClick={onClick}
-          onDragStart={() => {setIsDragging(true)}}
-          onDragMove={onDrag}
-          onDragEnd={dragEnd}
-        />
+        {renderBasedOnType()}
       </Portal>
       {/* Hovers */}
       {renderHover()}

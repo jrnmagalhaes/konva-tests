@@ -13,7 +13,6 @@ const FormDrawer = ({optionDraged}) => {
   const [hoveredElement, setHoveredElement] = React.useState({});
 
   React.useEffect(() => {
-    console.log("Items: ", items);
     setHoveredElement({})
   }, [items])
 
@@ -83,7 +82,6 @@ const FormDrawer = ({optionDraged}) => {
       ...optionDraged,
       id: Date.now(),
       x: DRAWING_PADDING,
-      type: 'formitem'
     }
     if (shape) {
       const relativePosition = shape.getRelativePointerPosition();
@@ -223,7 +221,6 @@ const FormDrawer = ({optionDraged}) => {
     const firstPart = items.slice(0, newIndex);
     const secondPart = items.slice(newIndex);
     firstPart.push(newItem);
-
     return firstPart.concat(secondPart);
   }
 
@@ -281,8 +278,6 @@ const FormDrawer = ({optionDraged}) => {
           return;
       }
     }
-
-
   }
 
   const renderColumnItems = (column, columnIndex) => {
@@ -299,6 +294,7 @@ const FormDrawer = ({optionDraged}) => {
         columnIndex={columnIndex}
         width={item_width}
         fill={item.color}
+        type={item.type}
         onDragMove={onDragOver}
         onDragEnd={onDropReorder}
       />
@@ -309,7 +305,7 @@ const FormDrawer = ({optionDraged}) => {
     <FormDrawerContainer onDrop={onDropNewItem} onItemDrag={onDragOver} contentHeight={contentHeight}>
       <Layer>
         {items.map((item, index) =>
-          item.type === 'formitem' ?
+          item.type !== 'column' ?
             <FormItem
               key={`form-item-${item.id}`}
               id={item.id}
@@ -320,6 +316,7 @@ const FormDrawer = ({optionDraged}) => {
               width={TOTAL_WIDTH}
               hoverSide={(hoveredElement.index == index && hoveredElement.columnIndex === undefined) ? hoveredElement.hoverSide : undefined}
               fill={item.color}
+              type={item.type}
               onDragMove={onDragOver}
               onDragEnd={onDropReorder}
             />
