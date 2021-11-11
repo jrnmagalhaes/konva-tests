@@ -32,8 +32,10 @@ const FormDrawer = ({optionDraged}) => {
 
   }
 
-  const addToColumn = (items, newItem, index) => {
-
+  const addToColumn = (items, newItem, index, position = 'left') => {
+    const cutPosition = position === 'left' ? index : index + 1;
+    let secondPart = items.splice(cutPosition);
+    items.push(newItem, ...secondPart);
   }
 
   const createColumn = (items, newItem, index, position = 'left') => {
@@ -59,28 +61,40 @@ const FormDrawer = ({optionDraged}) => {
     if (hoveredElement.index) {
       // faz um deep copy da árvore de items.
       const newItems = JSON.parse(JSON.stringify(items));
+      console.log("newItems: ", newItems);
       let itemsToChange = newItems;
       let father = null;
       // verifica se o accIndex é diferente de '', se for irá percorrer todos os indexes e buscar em que nó da árvore o item será inserido
       if (hoveredElement.accIndex !== '') {
         const indexes = hoveredElement.accIndex.split('-');
-        father = newItems[indexes[0]];
-        for (let i = 1; i < indexes.length; i++) {
-          father = father.items[i];
+        console.log("indexes: ", indexes);
+        for (let i = 0; i < indexes.length; i++) {
+          if (i === 0) {
+            father = newItems[indexes[i]];
+            continue;
+          }
+          father = father.items[indexes[i]];
+          console.log("father: ", father )
         }
-        itemsToChange = father.items;
+        itemsToChange = father.items ?? null;
       } else if (hoveredElement.hoverSide === 'middle') {
         itemsToChange = itemsToChange[hoveredElement.index].items;
       }
       switch (hoveredElement.hoverSide) {
         case 'left':
-          if ( (father !== null) && father.type === 'column' ) { // se o item que está sendo sobreposto já estiver numa coluna, é só adicionar.
-            addToColumn(itemsToChange);
+          if ( (father !== null) && father.type === 'column' ) {
+            addToColumn(father.items, newItem, hoveredElement.index, 'left');
           } else {
             createColumn(father ? father.items : itemsToChange, newItem, hoveredElement.index, 'left');
           }
           break;
         case 'right':
+          if ( (father !== null) && father.type === 'column' ) {
+            addToColumn(father.items, newItem, hoveredElement.index, 'right');
+          } else {
+            createColumn(father ? father.items : itemsToChange, newItem, hoveredElement.index, 'right');
+          }
+          break;
         case 'top':
         case 'bottom':
         case 'middle':
