@@ -1,4 +1,3 @@
-// TODO: refator the ordering and the addition of new items to reuse code
 import React from "react";
 import { FormColumn, FormDrawerContainer, FormItem } from '../../molecules';
 import { Layer } from 'react-konva';
@@ -13,135 +12,98 @@ const FormDrawer = ({optionDraged}) => {
   const [hoveredElement, setHoveredElement] = React.useState({});
 
   React.useEffect(() => {
+    console.log("items:", items);
     setHoveredElement({})
   }, [items])
 
-  const calculateHeight = (arr) => arr.reduce((acc, current, i, arr) => (acc + (current.y !== arr[i-1]?.y ? current.height + DISTANCE_BETWEEN_ELEMENTS : 0)), 0)
+  const calculateHeight = (arr) => arr.reduce((acc, current, i, arr) => (acc + (current.y !== arr[i-1]?.y ? current.height + DISTANCE_BETWEEN_ELEMENTS : 0)), 10)
 
   const contentHeight = React.useMemo(() => (calculateHeight(items)), [items]);
 
-  const addAtColumn = (newItem, overlapingItem, index, position = 'left', columnIndex) => {
-    if (columnIndex !== undefined) {
-      // pega o array de itens dentro da coluna
-      let newItems = [...items[columnIndex].items]
-      // adiciona o novo item na posição
-      const cutPosition = position === 'left' ? index : index + 1;
-      let firstPart = newItems.slice(0, cutPosition);
-      let secondPart = newItems.slice(cutPosition);
-      newItem.y = overlapingItem.y;
-      newItems = [...firstPart, newItem, ...secondPart];
-      const newHeight = newItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0)
-      // atualiza o array de itens na coluna
-      // atualiza o array de items geral com os novos dados da coluna.
-      setItems(items.map((item, i) => {
-        if ( i === Number(columnIndex) ) {
-          return {
-            ...item,
-            height: newHeight, //utiliza o maior height para a altura das colunas
-            items: newItems
-          }
-        } else if (i > columnIndex ) {
-          return {
-            ...item,
-            y: items[i-1].y + ((i === (Number(columnIndex) + 1)) ? newHeight : items[i-1].height) + DISTANCE_BETWEEN_ELEMENTS
-          }
-        }
-        return item;
-      }))
-    } else {
-      newItem.y = overlapingItem.y;
-      const columnItems = position === 'left' ? [newItem, overlapingItem] : [overlapingItem, newItem];
-      const newHeight = columnItems.reduce((acc, item) => (item.height > acc ? item.height : acc), 0);
-      let currentHeight = 0;
-      setItems(items.map((item, i) => {
-        if ( i === Number(index) ) {
-          currentHeight = item.y+newHeight+DISTANCE_BETWEEN_ELEMENTS;
-          return {
-            id: Date.now(),
-            type: 'column',
-            y: item.y,
-            x: item.x,
-            height: newHeight,
-            items: columnItems
-          }
-        } else if (i > index) {
-          const toReturn = {
-            ...item,
-            y: currentHeight
-          }
-          currentHeight += item.height + DISTANCE_BETWEEN_ELEMENTS
-          return toReturn
-        }
-        return item;
-      }))
-    }
+  const addItemInPosition = (newItem, items, newIndex) => {
+    const firstPart = items.slice(0, newIndex);
+    const secondPart = items.slice(newIndex);
+    firstPart.push(newItem);
+    return firstPart.concat(secondPart);
   }
 
-  const onDropNewItem = (shape) => {
+  //TODO: criar função que fará o resize de todos os itens
+  const resizeTree = (items) => {
+
+  }
+
+  const addToColumn = (items, newItem, index) => {
+
+  }
+
+  const createColumn = (items, newItem, index, position = 'left') => {
+    items[index] = {
+      id: Date.now(),
+      x: items[index].x,
+      y: items[index].y,
+      height: [newItem, items[index]].reduce((acc, item) => (item.height > acc) ? item.height : acc, 0),
+      type: 'column',
+      items: position === 'left' ? [newItem, items[index]] : [items[index], newItem]
+    }
+    return items;
+  }
+
+  // TODO: refazer esse método para utilizar o hoveredElement.
+  const onDropNewItem = () => {
     const newItem = {
       ...optionDraged,
       id: Date.now(),
       x: DRAWING_PADDING,
     }
-    if (shape) {
-      const relativePosition = shape.getRelativePointerPosition();
-      // em caso de dúvida, olhar a formulação do id dentro do FormItem
-      const [index, id, itemType, columnIndex] = shape.attrs.id.split('-');
 
-      // se estiver dentro de uma coluna, acessar o item dentro da coluna
-      const overlapingItem = columnIndex ? items[columnIndex].items[index] : items[index];
-      let firstPart;
-      let secondPart;
-
-      // aqui utilizamos as dimensões do shape na comparação porque se for uma coluna a altura do item não vai corresponder a altura de desenho
-      if (relativePosition.x < (shape.attrs.x + SIZE_OF_SIDE_DROPS) ) { // criar coluna ou adicionar dentro da coluna:
-        // adicionar novo item à esquerda do item que ele está sobrepondo
-        addAtColumn(newItem, overlapingItem, index, 'left', columnIndex);
-        // finaliza a execução da inserção
-        return;
-      } else if (relativePosition.x > (shape.attrs.x + (shape.attrs.width - SIZE_OF_SIDE_DROPS))) { // criar coluna ou adiciona dentro da coluna
-        // adiciona item novo à direita do item que ele está sobrepondo
-        addAtColumn(newItem, overlapingItem, index, 'right', columnIndex);
-        // finaliza a execução da inserção
-        return;
-      } else if (relativePosition.y < (shape.attrs.y + (shape.attrs.height*0.5))) { // item acima da posição
-        firstPart = items.slice(0, columnIndex ?? index);
-        secondPart = items.slice(columnIndex ?? index)
-      } else { // adiciona abaixo
-        firstPart = items.slice(0, Number(columnIndex ?? index) + 1);
-        secondPart = items.slice(Number(columnIndex ?? index) + 1)
-      }
-      // array that will be the new state
-      let toUpdate;
-
-      newItem.y = calculateHeight(firstPart);
-      newItem.width = TOTAL_WIDTH;
-      firstPart.push(newItem);
-      // atualiza a posição dos itens da parte final, levando em consideração os itens da mesma linha devem descer juntos
-      const secondPartInitialHeight = newItem.y + newItem.height + DISTANCE_BETWEEN_ELEMENTS;
-      for (let i = 0; i < secondPart.length; i++) {
-        if (i === 0) {
-          secondPart[i].y = secondPartInitialHeight;
-        } else {
-          secondPart[i].y = secondPart[i-1].y + secondPart[i-1].height + DISTANCE_BETWEEN_ELEMENTS;
+    if (hoveredElement.index) {
+      // faz um deep copy da árvore de items.
+      const newItems = JSON.parse(JSON.stringify(items));
+      let itemsToChange = newItems;
+      let father = null;
+      // verifica se o accIndex é diferente de '', se for irá percorrer todos os indexes e buscar em que nó da árvore o item será inserido
+      if (hoveredElement.accIndex !== '') {
+        const indexes = hoveredElement.accIndex.split('-');
+        father = newItems[indexes[0]];
+        for (let i = 1; i < indexes.length; i++) {
+          father = father.items[i];
         }
+        itemsToChange = father.items;
+      } else if (hoveredElement.hoverSide === 'middle') {
+        itemsToChange = itemsToChange[hoveredElement.index].items;
       }
-
-      toUpdate = firstPart.concat(secondPart);
-      setItems(toUpdate);
-
+      switch (hoveredElement.hoverSide) {
+        case 'left':
+          if ( (father !== null) && father.type === 'column' ) { // se o item que está sendo sobreposto já estiver numa coluna, é só adicionar.
+            addToColumn(itemsToChange);
+          } else {
+            createColumn(father ? father.items : itemsToChange, newItem, hoveredElement.index, 'left');
+          }
+          break;
+        case 'right':
+        case 'top':
+        case 'bottom':
+        case 'middle':
+          itemsToChange.push(newItem);
+          break;
+        default:
+          return;
+      }
+      resizeTree(newItems);
+      setItems(newItems);
       return;
     }
     newItem.y = contentHeight;
     newItem.width = TOTAL_WIDTH;
+    console.log('newItem:', newItem)
     setItems([...items, newItem])
   }
 
-  const newHoveredElement = (index, columnIndex, hoverSide) => {
-    if ((hoveredElement.index !== index) || (hoveredElement.columnIndex !== columnIndex) || (hoveredElement.hoverSide !== hoverSide)) {
+  const newHoveredElement = (index, accIndex, hoverSide) => {
+    if ((hoveredElement.index !== index) || (hoveredElement.accIndex !== accIndex) || (hoveredElement.hoverSide !== hoverSide)) {
       setHoveredElement({
         index: index,
-        columnIndex: columnIndex,
+        accIndex: accIndex,
         hoverSide: hoverSide
       })
     }
@@ -149,17 +111,23 @@ const FormDrawer = ({optionDraged}) => {
 
   const onDragOver = (shape) => {
     if (shape) {
+      const {id, width, height} = shape.attrs;
       const relativePosition = shape.getRelativePointerPosition();
-      if (shape.attrs.id) {
-        const [index, id, itemType, columnIndex] = shape.attrs.id.split('-');
-        if (relativePosition.x < (SIZE_OF_SIDE_DROPS) ) {
-          newHoveredElement(index, columnIndex, 'left');
-        } else if (relativePosition.x > (shape.attrs.width - SIZE_OF_SIDE_DROPS)) {
-          newHoveredElement(index, columnIndex, 'right');
-        } else if (relativePosition.y < (shape.attrs.height*0.5)) {
-          newHoveredElement(index, columnIndex, 'top');
+      if (id) {
+        const indexes = id.split('-');
+        const type = indexes.pop();
+        const index = indexes.pop();
+        const accIndex = (indexes.length > 0) ? indexes.join('-') : '';
+        if ( type === 'section' && ((relativePosition.x > SIZE_OF_SIDE_DROPS) && (relativePosition.x < (width - SIZE_OF_SIDE_DROPS)) && (relativePosition.y > (height*0.2) ) && (relativePosition.y < (height*0.8)) ) ) {
+          newHoveredElement(index, accIndex, 'middle');
+        } else if (relativePosition.x < (SIZE_OF_SIDE_DROPS) ) {
+          newHoveredElement(index, accIndex, 'left');
+        } else if (relativePosition.x > (width - SIZE_OF_SIDE_DROPS)) {
+          newHoveredElement(index, accIndex, 'right');
+        } else if (relativePosition.y < (height*0.5)) {
+          newHoveredElement(index, accIndex, 'top');
         } else {
-          newHoveredElement(index, columnIndex, 'bottom');
+          newHoveredElement(index, accIndex, 'bottom');
         }
       }
     } else {
@@ -217,15 +185,10 @@ const FormDrawer = ({optionDraged}) => {
     }
   }
 
-  const addItemInPosition = (newItem, items, newIndex) => {
-    const firstPart = items.slice(0, newIndex);
-    const secondPart = items.slice(newIndex);
-    firstPart.push(newItem);
-    return firstPart.concat(secondPart);
-  }
 
+  // TODO: refazer para utilizar o index acumulado
   /**
-   * Essa funçao vai receber o index e a coluna se for o caso e substituir onde o hoveredElement indicar que ele tem que cair.
+   * Essa funçao vai receber o index e o index acumulado se for o caso e substituir onde o hoveredElement indicar que ele tem que cair.
    *
    * No caso de não existir um hovered element, verificar se a posição que ele foi jogado é maior que o valor de y do ultimo item + height do ultimo item,
    * se for maior, jogar o item para o final, se for menor, voltar o item para a posição (provavelmente atualizei os items com a exata mesma lista para causar
@@ -280,7 +243,7 @@ const FormDrawer = ({optionDraged}) => {
     }
   }
 
-  const renderColumnItems = (column, columnIndex) => {
+  const renderColumnItems = (column, accIndex) => {
     const item_width = ((TOTAL_WIDTH-(DISTANCE_BETWEEN_ELEMENTS * (column.items.length - 1)))/column.items.length);
     return column.items.map((item, index) =>
       <FormItem
@@ -290,8 +253,8 @@ const FormDrawer = ({optionDraged}) => {
         x={((item_width+DISTANCE_BETWEEN_ELEMENTS) * (index) )}
         y={0}
         height={column.height}
-        hoverSide={((hoveredElement.index == index) && (columnIndex == hoveredElement.columnIndex)) ? hoveredElement.hoverSide : undefined}
-        columnIndex={columnIndex}
+        hoverSide={((hoveredElement.index == index) && (accIndex == hoveredElement.accIndex)) ? hoveredElement.hoverSide : undefined}
+        accIndex={accIndex}
         width={item_width}
         fill={item.color}
         type={item.type}
@@ -301,26 +264,11 @@ const FormDrawer = ({optionDraged}) => {
     )
   }
 
-  return (
-    <FormDrawerContainer onDrop={onDropNewItem} onItemDrag={onDragOver} contentHeight={contentHeight}>
-      <Layer>
-        {items.map((item, index) =>
-          item.type !== 'column' ?
-            <FormItem
-              key={`form-item-${item.id}`}
-              id={item.id}
-              index={index}
-              x={DRAWING_PADDING}
-              y={item.y}
-              height={item.height}
-              width={TOTAL_WIDTH}
-              hoverSide={(hoveredElement.index == index && hoveredElement.columnIndex === undefined) ? hoveredElement.hoverSide : undefined}
-              fill={item.color}
-              type={item.type}
-              onDragMove={onDragOver}
-              onDragEnd={onDropReorder}
-            />
-            :
+  const renderItems = (items, accIndex = '') => {
+    return items.map((item, index) => {
+      switch (item.type) {
+        case 'column':
+          return (
             <FormColumn
               key={`form-column-${item.id}`}
               id={item.id}
@@ -330,9 +278,55 @@ const FormDrawer = ({optionDraged}) => {
               height={item.height}
               width={TOTAL_WIDTH}
             >
-              {renderColumnItems(item, index)}
+              {renderColumnItems(item, `${accIndex !== '' ? accIndex+'-' : ''}${index}`)}
             </FormColumn>
-        )}
+          )
+        case 'section':
+          return (
+            <FormItem
+              key={`form-item-${item.id}`}
+              id={item.id}
+              index={index}
+              x={DRAWING_PADDING}
+              y={item.y}
+              height={item.height}
+              width={TOTAL_WIDTH}
+              accIndex={accIndex}
+              hoverSide={(hoveredElement.index == index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
+              fill={item.color}
+              type={item.type}
+              onDragMove={onDragOver}
+              onDragEnd={onDropReorder}
+            >
+              {renderItems(item.items, `${accIndex !== '' ? accIndex+'-' : ''}${index}`)}
+            </FormItem>
+          )
+        default:
+          return (
+            <FormItem
+              key={`form-item-${item.id}`}
+              id={item.id}
+              index={index}
+              x={DRAWING_PADDING}
+              y={item.y}
+              height={item.height}
+              width={TOTAL_WIDTH}
+              hoverSide={(hoveredElement.index == index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
+              fill={item.color}
+              accIndex={accIndex}
+              type={item.type}
+              onDragMove={onDragOver}
+              onDragEnd={onDropReorder}
+            />
+          );
+      }
+    })
+  }
+
+  return (
+    <FormDrawerContainer onDrop={onDropNewItem} onItemDrag={onDragOver} contentHeight={contentHeight}>
+      <Layer>
+        {renderItems(items)}
       </Layer>
       <Layer name="top-layer" />
     </FormDrawerContainer>
