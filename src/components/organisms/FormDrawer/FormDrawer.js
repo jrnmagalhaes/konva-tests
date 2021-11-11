@@ -101,9 +101,11 @@ const FormDrawer = ({optionDraged}) => {
           }
           break;
         case 'top':
+          newItem.width = itemsToChange[hoveredElement.index].width
           addItemInPosition(itemsToChange, newItem, hoveredElement.index);
           break;
         case 'bottom':
+          newItem.width = itemsToChange[hoveredElement.index].width
           addItemInPosition(itemsToChange, newItem, (Number(hoveredElement.index) + 1));
           break;
         case 'middle':
