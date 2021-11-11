@@ -1,7 +1,7 @@
 import React from "react";
 import { FormColumn, FormDrawerContainer, FormItem } from '../../molecules';
 import { Layer } from 'react-konva';
-import { SIDEBAR_WIDTH, DISTANCE_BETWEEN_ELEMENTS, DRAWING_PADDING } from "../../../utils/constants";
+import { SIDEBAR_WIDTH, DISTANCE_BETWEEN_ELEMENTS, DRAWING_PADDING, SECTION_PADDING, SECTION_DEFAULT_HEIGHT } from "../../../utils/constants";
 
 
 const FormDrawer = ({optionDraged}) => {
@@ -20,16 +20,26 @@ const FormDrawer = ({optionDraged}) => {
 
   const contentHeight = React.useMemo(() => (calculateHeight(items)), [items]);
 
-  const addItemInPosition = (newItem, items, newIndex) => {
-    const firstPart = items.slice(0, newIndex);
-    const secondPart = items.slice(newIndex);
-    firstPart.push(newItem);
-    return firstPart.concat(secondPart);
+  const resizeTree = (items, layer = 0) => {
+    for (let i = 0; i < items.length; i++) {
+      items[i].x = layer === 0 ? DRAWING_PADDING : SECTION_PADDING;
+      if (i === 0) {
+        items[i].y = layer === 0 ? 10 : SECTION_PADDING;
+      } else {
+        items[i].y =  items[i-1].y + items[i-1].height + DISTANCE_BETWEEN_ELEMENTS;
+      }
+      if (items[i].type === 'section') {
+        items[i].height = items[i].items.length > 0 ? (resizeTree(items[i].items, layer+1) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT;
+      } else if (items[i].type === 'column') {
+        items[i].height = items[i].items.reduce((acc, item) => (item.height > acc) ? item.height : acc, 0)
+      }
+    }
+    return calculateHeight(items);
   }
 
-  //TODO: criar função que fará o resize de todos os itens
-  const resizeTree = (items) => {
-
+  const addItemInPosition = (items, newItem, index) => {
+    const secondPart = items.splice(index);
+    items.push(newItem, ...secondPart);
   }
 
   const addToColumn = (items, newItem, index, position = 'left') => {
@@ -50,7 +60,6 @@ const FormDrawer = ({optionDraged}) => {
     return items;
   }
 
-  // TODO: refazer esse método para utilizar o hoveredElement.
   const onDropNewItem = () => {
     const newItem = {
       ...optionDraged,
@@ -61,7 +70,6 @@ const FormDrawer = ({optionDraged}) => {
     if (hoveredElement.index) {
       // faz um deep copy da árvore de items.
       const newItems = JSON.parse(JSON.stringify(items));
-      console.log("newItems: ", newItems);
       let itemsToChange = newItems;
       let father = null;
       // verifica se o accIndex é diferente de '', se for irá percorrer todos os indexes e buscar em que nó da árvore o item será inserido
@@ -71,33 +79,36 @@ const FormDrawer = ({optionDraged}) => {
         for (let i = 0; i < indexes.length; i++) {
           if (i === 0) {
             father = newItems[indexes[i]];
-            continue;
+          } else {
+            father = father.items[indexes[i]];
           }
-          father = father.items[indexes[i]];
-          console.log("father: ", father )
         }
         itemsToChange = father.items ?? null;
-      } else if (hoveredElement.hoverSide === 'middle') {
-        itemsToChange = itemsToChange[hoveredElement.index].items;
       }
       switch (hoveredElement.hoverSide) {
         case 'left':
           if ( (father !== null) && father.type === 'column' ) {
-            addToColumn(father.items, newItem, hoveredElement.index, 'left');
+            addToColumn(itemsToChange, newItem, hoveredElement.index, 'left');
           } else {
-            createColumn(father ? father.items : itemsToChange, newItem, hoveredElement.index, 'left');
+            createColumn(itemsToChange, newItem, hoveredElement.index, 'left');
           }
           break;
         case 'right':
           if ( (father !== null) && father.type === 'column' ) {
-            addToColumn(father.items, newItem, hoveredElement.index, 'right');
+            addToColumn(itemsToChange, newItem, hoveredElement.index, 'right');
           } else {
-            createColumn(father ? father.items : itemsToChange, newItem, hoveredElement.index, 'right');
+            createColumn(itemsToChange, newItem, hoveredElement.index, 'right');
           }
           break;
         case 'top':
+          addItemInPosition(itemsToChange, newItem, hoveredElement.index);
+          break;
         case 'bottom':
+          addItemInPosition(itemsToChange, newItem, (Number(hoveredElement.index) + 1));
+          break;
         case 'middle':
+          newItem.width = itemsToChange[hoveredElement.index].width - (2*SECTION_PADDING)
+          itemsToChange = itemsToChange[hoveredElement.index].items;
           itemsToChange.push(newItem);
           break;
         default:
@@ -287,7 +298,7 @@ const FormDrawer = ({optionDraged}) => {
               key={`form-column-${item.id}`}
               id={item.id}
               index={index}
-              x={DRAWING_PADDING}
+              x={item.x}
               y={item.y}
               height={item.height}
               width={TOTAL_WIDTH}
@@ -301,10 +312,10 @@ const FormDrawer = ({optionDraged}) => {
               key={`form-item-${item.id}`}
               id={item.id}
               index={index}
-              x={DRAWING_PADDING}
+              x={item.x}
               y={item.y}
               height={item.height}
-              width={TOTAL_WIDTH}
+              width={item.width}
               accIndex={accIndex}
               hoverSide={(hoveredElement.index == index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
               fill={item.color}
@@ -321,10 +332,10 @@ const FormDrawer = ({optionDraged}) => {
               key={`form-item-${item.id}`}
               id={item.id}
               index={index}
-              x={DRAWING_PADDING}
+              x={item.x}
               y={item.y}
               height={item.height}
-              width={TOTAL_WIDTH}
+              width={item.width}
               hoverSide={(hoveredElement.index == index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
               fill={item.color}
               accIndex={accIndex}

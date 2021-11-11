@@ -128,7 +128,7 @@ const FormItem = ({id, index, x, y, width, height, fill, accIndex, onClick, hove
   return (
     <Group
       x={x}
-      y={accIndex ? 0 : (y - (DISTANCE_BETWEEN_ELEMENTS/2)) }
+      y={y}
       id={`${accIndex}-${index}-${type}`}
       width={width}
       height={accIndex ? height : (height + DISTANCE_BETWEEN_ELEMENTS) }
