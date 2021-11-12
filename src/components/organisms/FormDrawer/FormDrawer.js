@@ -73,14 +73,17 @@ const FormDrawer = ({optionDraged}) => {
       const newItems = JSON.parse(JSON.stringify(items));
       let itemsToChange = newItems;
       let father = null;
+      let fatherRow = null;
       // verifica se o accIndex é diferente de '', se for irá percorrer todos os indexes e buscar em que nó da árvore o item será inserido
       if (hoveredElement.accIndex !== '') {
         const indexes = hoveredElement.accIndex.split('-');
         console.log("indexes: ", indexes);
         for (let i = 0; i < indexes.length; i++) {
           if (i === 0) {
+            fatherRow = newItems;
             father = newItems[indexes[i]];
           } else {
+            fatherRow = father.items;
             father = father.items[indexes[i]];
           }
         }
@@ -102,10 +105,22 @@ const FormDrawer = ({optionDraged}) => {
           }
           break;
         case 'top':
+          if ( (father !== null) && father.type === 'column' ) {
+            const fatherIndex = hoveredElement.accIndex.split('-').pop();
+            newItem.width = fatherRow[fatherIndex].width;
+            addItemInPosition(fatherRow, newItem, (Number(fatherIndex)));
+            break;
+          }
           newItem.width = itemsToChange[hoveredElement.index].width
           addItemInPosition(itemsToChange, newItem, hoveredElement.index);
           break;
         case 'bottom':
+          if ( (father !== null) && father.type === 'column' ) {
+            const fatherIndex = hoveredElement.accIndex.split('-').pop();
+            newItem.width = fatherRow[fatherIndex].width;
+            addItemInPosition(fatherRow, newItem, (Number(fatherIndex) + 1));
+            break;
+          }
           newItem.width = itemsToChange[hoveredElement.index].width
           addItemInPosition(itemsToChange, newItem, (Number(hoveredElement.index) + 1));
           break;
