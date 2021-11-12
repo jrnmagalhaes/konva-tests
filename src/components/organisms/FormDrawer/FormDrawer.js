@@ -31,6 +31,7 @@ const FormDrawer = ({optionDraged}) => {
       if (items[i].type === 'section') {
         items[i].height = items[i].items.length > 0 ? (resizeTree(items[i].items, layer+1) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT;
       } else if (items[i].type === 'column') {
+        items[i].width = layer !== 0 ? (TOTAL_WIDTH - (layer*(2*SECTION_PADDING))) : TOTAL_WIDTH;
         items[i].height = items[i].items.reduce((acc, item) => (item.height > acc) ? item.height : acc, 0)
       }
     }
@@ -270,8 +271,8 @@ const FormDrawer = ({optionDraged}) => {
     }
   }
 
-  const renderColumnItems = (column, accIndex) => {
-    const item_width = ((TOTAL_WIDTH-(DISTANCE_BETWEEN_ELEMENTS * (column.items.length - 1)))/column.items.length);
+  const renderColumnItems = (column, accIndex, column_width) => {
+    const item_width = ((column_width-(DISTANCE_BETWEEN_ELEMENTS * (column.items.length - 1)))/column.items.length);
     return column.items.map((item, index) =>
       <FormItem
         key={`form-item-${item.id}-column-${column.id}`}
@@ -303,9 +304,9 @@ const FormDrawer = ({optionDraged}) => {
               x={item.x}
               y={item.y}
               height={item.height}
-              width={TOTAL_WIDTH}
+              width={item.width}
             >
-              {renderColumnItems(item, `${accIndex !== '' ? accIndex+'-' : ''}${index}`)}
+              {renderColumnItems(item, `${accIndex !== '' ? accIndex+'-' : ''}${index}`, item.width)}
             </FormColumn>
           )
         case 'section':
