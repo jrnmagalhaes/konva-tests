@@ -298,17 +298,16 @@ const FormDrawer = ({optionDraged}) => {
   }
 
   const renderColumnItems = (column, accIndex, column_width) => {
-    const item_width = ((column_width-(DISTANCE_BETWEEN_ELEMENTS * (column.items.length - 1)))/column.items.length);
     return column.items.map((item, index) =>
       item.type === 'section' ?
         <FormItem
           key={`form-item-${item.id}`}
           id={item.id}
           index={index}
-          x={((item_width+DISTANCE_BETWEEN_ELEMENTS) * (index) )}
+          x={((item.width+DISTANCE_BETWEEN_ELEMENTS) * (index) )}
           y={0}
           height={column.height}
-          width={item_width}
+          width={item.width}
           accIndex={accIndex}
           hoverSide={(Number(hoveredElement.index) === index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
           fill={item.color}
@@ -323,12 +322,12 @@ const FormDrawer = ({optionDraged}) => {
         key={`form-item-${item.id}-column-${column.id}`}
         id={item.id}
         index={index}
-        x={((item_width+DISTANCE_BETWEEN_ELEMENTS) * (index) )}
+        x={((item.width+DISTANCE_BETWEEN_ELEMENTS) * (index) )}
         y={0}
         height={column.height}
         hoverSide={((Number(hoveredElement.index) === index) && (accIndex === hoveredElement.accIndex)) ? hoveredElement.hoverSide : undefined}
         accIndex={accIndex}
-        width={item_width}
+        width={item.width}
         fill={item.color}
         type={item.type}
         onDragMove={onDragOver}
