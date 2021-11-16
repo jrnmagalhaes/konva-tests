@@ -20,7 +20,7 @@ const FormDrawer = ({optionDraged}) => {
 
   const contentHeight = React.useMemo(() => (calculateHeight(items)), [items]);
 
-  const resizeTree = (items, layer = 0) => {
+  const resizeTree = (items, layer = 0, current_width = TOTAL_WIDTH) => {
     for (let i = 0; i < items.length; i++) {
       items[i].x = layer === 0 ? DRAWING_PADDING : SECTION_PADDING;
       if (i === 0) {
@@ -29,15 +29,15 @@ const FormDrawer = ({optionDraged}) => {
         items[i].y =  items[i-1].y + items[i-1].height + DISTANCE_BETWEEN_ELEMENTS;
       }
       if (items[i].type === 'section') {
-        items[i].height = items[i].items.length > 0 ? (resizeTree(items[i].items, layer+1) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT;
+        items[i].height = items[i].items.length > 0 ? (resizeTree(items[i].items, layer+1, items[i].width) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT;
       } else if (items[i].type === 'column') {
-        items[i].width = layer !== 0 ? (TOTAL_WIDTH - (layer*(2*SECTION_PADDING))) : TOTAL_WIDTH;
+        items[i].width = layer !== 0 ? (current_width - (2*SECTION_PADDING)) : current_width;
         let taller = 0;
         let item_width = ((items[i].width-(DISTANCE_BETWEEN_ELEMENTS * (items[i].items.length - 1)))/items[i].items.length);
         for (let j = 0; j < items[i].items.length; j++) {
           items[i].items[j].width = item_width;
           if (items[i].items[j].type === 'section') {
-            items[i].items[j].height = items[i].items[j].items.length > 0 ? (resizeTree(items[i].items[j].items, layer+1) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT
+            items[i].items[j].height = items[i].items[j].items.length > 0 ? (resizeTree(items[i].items[j].items, layer+1, item_width) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT
           }
           if (items[i].items[j].height > taller) {
             taller = items[i].items[j].height
