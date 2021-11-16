@@ -32,7 +32,18 @@ const FormDrawer = ({optionDraged}) => {
         items[i].height = items[i].items.length > 0 ? (resizeTree(items[i].items, layer+1) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT;
       } else if (items[i].type === 'column') {
         items[i].width = layer !== 0 ? (TOTAL_WIDTH - (layer*(2*SECTION_PADDING))) : TOTAL_WIDTH;
-        items[i].height = items[i].items.reduce((acc, item) => (item.height > acc) ? item.height : acc, 0)
+        let taller = 0;
+        let item_width = ((items[i].width-(DISTANCE_BETWEEN_ELEMENTS * (items[i].items.length - 1)))/items[i].items.length);
+        for (let j = 0; j < items[i].items.length; j++) {
+          items[i].items[j].width = item_width;
+          if (items[i].items[j].type === 'section') {
+            items[i].items[j].height = items[i].items[j].items.length > 0 ? (resizeTree(items[i].items[j].items, layer+1) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT
+          }
+          if (items[i].items[j].height > taller) {
+            taller = items[i].items[j].height
+          }
+        }
+        items[i].height = taller;
       }
     }
     return calculateHeight(items);
@@ -289,6 +300,25 @@ const FormDrawer = ({optionDraged}) => {
   const renderColumnItems = (column, accIndex, column_width) => {
     const item_width = ((column_width-(DISTANCE_BETWEEN_ELEMENTS * (column.items.length - 1)))/column.items.length);
     return column.items.map((item, index) =>
+      item.type === 'section' ?
+        <FormItem
+          key={`form-item-${item.id}`}
+          id={item.id}
+          index={index}
+          x={((item_width+DISTANCE_BETWEEN_ELEMENTS) * (index) )}
+          y={0}
+          height={column.height}
+          width={item_width}
+          accIndex={accIndex}
+          hoverSide={(Number(hoveredElement.index) === index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
+          fill={item.color}
+          type={item.type}
+          onDragMove={onDragOver}
+          onDragEnd={onDropReorder}
+        >
+          {renderItems(item.items, `${accIndex !== '' ? accIndex+'-' : ''}${index}`)}
+        </FormItem>
+      :
       <FormItem
         key={`form-item-${item.id}-column-${column.id}`}
         id={item.id}
@@ -333,7 +363,7 @@ const FormDrawer = ({optionDraged}) => {
               x={item.x}
               y={item.y}
               height={item.height}
-              width={item.width}
+              width={item.width ?? 10}
               accIndex={accIndex}
               hoverSide={(Number(hoveredElement.index) === index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
               fill={item.color}
