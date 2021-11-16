@@ -296,7 +296,7 @@ const FormDrawer = ({optionDraged}) => {
         x={((item_width+DISTANCE_BETWEEN_ELEMENTS) * (index) )}
         y={0}
         height={column.height}
-        hoverSide={((hoveredElement.index == index) && (accIndex == hoveredElement.accIndex)) ? hoveredElement.hoverSide : undefined}
+        hoverSide={((Number(hoveredElement.index) === index) && (accIndex === hoveredElement.accIndex)) ? hoveredElement.hoverSide : undefined}
         accIndex={accIndex}
         width={item_width}
         fill={item.color}
@@ -335,7 +335,7 @@ const FormDrawer = ({optionDraged}) => {
               height={item.height}
               width={item.width}
               accIndex={accIndex}
-              hoverSide={(hoveredElement.index == index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
+              hoverSide={(Number(hoveredElement.index) === index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
               fill={item.color}
               type={item.type}
               onDragMove={onDragOver}
@@ -354,7 +354,7 @@ const FormDrawer = ({optionDraged}) => {
               y={item.y}
               height={item.height}
               width={item.width}
-              hoverSide={(hoveredElement.index == index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
+              hoverSide={(Number(hoveredElement.index) === index && hoveredElement.accIndex === accIndex) ? hoveredElement.hoverSide : undefined}
               fill={item.color}
               accIndex={accIndex}
               type={item.type}
