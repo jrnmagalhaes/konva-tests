@@ -23,6 +23,7 @@ const FormDrawer = ({optionDraged}) => {
   const resizeTree = (items, layer = 0, current_width = TOTAL_WIDTH) => {
     for (let i = 0; i < items.length; i++) {
       items[i].x = layer === 0 ? DRAWING_PADDING : SECTION_PADDING;
+      items[i].width = layer === 0 ? current_width : (current_width - (2*SECTION_PADDING));
       if (i === 0) {
         items[i].y = layer === 0 ? 10 : SECTION_PADDING;
       } else {
@@ -34,16 +35,28 @@ const FormDrawer = ({optionDraged}) => {
         items[i].width = layer !== 0 ? (current_width - (2*SECTION_PADDING)) : current_width;
         let taller = 0;
         let item_width = ((items[i].width-(DISTANCE_BETWEEN_ELEMENTS * (items[i].items.length - 1)))/items[i].items.length);
+        // percorre todos os itens para descobrir o maior e no caso de um dos itens ser uma section, atualiza a altura da section
         for (let j = 0; j < items[i].items.length; j++) {
           items[i].items[j].width = item_width;
           if (items[i].items[j].type === 'section') {
-            items[i].items[j].height = items[i].items[j].items.length > 0 ? (resizeTree(items[i].items[j].items, layer+1, item_width) + (2*SECTION_PADDING)) : SECTION_DEFAULT_HEIGHT
+            items[i].items[j].height =
+              items[i].items[j].items.length > 0 ?
+                (resizeTree(items[i].items[j].items, layer+1, item_width) + (2*SECTION_PADDING))
+                :
+                SECTION_DEFAULT_HEIGHT
           }
           if (items[i].items[j].height > taller) {
             taller = items[i].items[j].height
           }
         }
         items[i].height = taller;
+        // desconstrói a coluna caso a quantidade de itens seja apenas um.
+        if (items[i].items.length === 1) {
+          items[i].type = items[i].items[0].type;
+          items[i].id = items[i].items[0].id;
+          items[i].color = items[i].items[0].color;
+          items[i].items = items[i].items[0].items; // caso seja uma section, atualiza os items, caso não seja, será undefined
+        }
       }
     }
     return calculateHeight(items);
@@ -88,7 +101,6 @@ const FormDrawer = ({optionDraged}) => {
       // verifica se o accIndex é diferente de '', se for irá percorrer todos os indexes e buscar em que nó da árvore o item será inserido
       if (hoveredElement.accIndex !== '') {
         const indexes = hoveredElement.accIndex.split('-');
-        console.log("indexes: ", indexes);
         for (let i = 0; i < indexes.length; i++) {
           if (i === 0) {
             fatherRow = newItems;
@@ -149,7 +161,6 @@ const FormDrawer = ({optionDraged}) => {
     }
     newItem.y = contentHeight;
     newItem.width = TOTAL_WIDTH;
-    console.log('newItem:', newItem)
     setItems([...items, newItem])
   }
 
@@ -189,57 +200,6 @@ const FormDrawer = ({optionDraged}) => {
     }
   }
 
-  /**
-   * Atualiza a posição y de todos os itens e das colunas também.
-   */
-  const reSizeItems = (newItems) => {
-    for (let i = 0; i < newItems.length; i++) {
-      newItems[i] = {
-        ...newItems[i],
-        y: i === 0 ? 0 : (newItems[i-1].y + newItems[i-1].height + DISTANCE_BETWEEN_ELEMENTS),
-        height: newItems[i].type === 'column' ? newItems[i].items.reduce((acc, item) => (item.height > acc ? item.height : acc), 0) : newItems[i].height
-      };
-    }
-    setItems(newItems);
-  }
-
-  /**
-   * Nessa função apenas estamos alocando o item na posição correta, não estamos ajustando nenhuma altura, nem nenhum posicionamento
-   */
-  const reOrderColumn = (newItem, items, index, columnIndex, position = 'left') => {
-    if (columnIndex && items[columnIndex].type === 'column') {
-      let newItems = [...items[columnIndex].items]
-      // adiciona o novo item na posição
-      const cutPosition = position === 'left' ? index : index + 1;
-      let firstPart = newItems.slice(0, cutPosition);
-      let secondPart = newItems.slice(cutPosition);
-      newItems = [...firstPart, newItem, ...secondPart];
-      // atualiza o array de itens na coluna
-      // atualiza o array de items geral com os novos dados da coluna.
-      return items.map((item, i) => {
-        if ( i === Number(columnIndex) ) {
-          return {
-            ...item,
-            items: newItems
-          }
-        }
-        return item;
-      })
-    } else {
-      return items.map( (item, i) => {
-        if (i === Number(index)) {
-          return {
-            id: Date.now(),
-            type: 'column',
-            items: position === 'left' ? [newItem, item] : [item, newItem]
-          }
-        }
-        return item
-      })
-    }
-  }
-
-
   // TODO: refazer para utilizar o index acumulado
   /**
    * Essa funçao vai receber o index e o index acumulado se for o caso e substituir onde o hoveredElement indicar que ele tem que cair.
@@ -248,53 +208,109 @@ const FormDrawer = ({optionDraged}) => {
    * se for maior, jogar o item para o final, se for menor, voltar o item para a posição (provavelmente atualizei os items com a exata mesma lista para causar
    * um re-render).
    */
-  const onDropReorder = (index, columnIndex) => {
-    const itemToReorder = columnIndex !== undefined ? items[columnIndex].items[index] : items[index];
-    // remove o item de onde ele estava
-    let newItems
-    if (columnIndex !== undefined) {
-      newItems = items.map((item, i) => {
-        if (i === Number(columnIndex)) {
-          // isso é para desconstruir a coluna caso necessário
-          item.items = item.items.filter((_, insideItemIndex) => insideItemIndex !== Number(index))
-          if (item.items.length === 1) {
-            return item.items[0];
+  const onDropReorder = (index, accIndex) => {
+    // deep copy the items
+    let newItems = JSON.parse(JSON.stringify(items));
+    let itemToRelocate = null;
+    // remove the item from its older position
+    if (Number(hoveredElement.index) !== index || hoveredElement.accIndex !== accIndex) {
+      if (accIndex !== '') {
+        const indexes = accIndex.split('-');
+        let father = null;
+        for (let i = 0; i < indexes.length; i++) {
+          if (i === 0) {
+            father = newItems[indexes[i]];
+          } else {
+            father = father.items[indexes[i]];
           }
-          return item;
         }
-        return item;
-      })
-    } else {
-      newItems = items.filter((item, i) => i !== index);
-    }
+        itemToRelocate = father.items[index];
+        father.items = father.items.filter((_, i) => i !== Number(index));
+      } else {
+        itemToRelocate = newItems[index];
+        newItems = newItems.filter((_, i) => i !== Number(index));
+      }
 
-    // se existe um item sendo sobreposto
-    if (hoveredElement.index) {
-      let newIndex;
+      let itemsToChange = newItems;
+      let father = null;
+      let fatherRow = null;
+      let subtractLayer = 1; // essa variável indica em qual layer a remoção aconteceu.
+      // verifica se o accIndex é diferente de '', se for irá percorrer todos os indexes e buscar em que nó da árvore o item será inserido
+      if (hoveredElement.accIndex !== '') {
+        if(hoveredElement.accIndex.match("^"+accIndex) && accIndex) subtractLayer = accIndex.split('-').length + 1; // a layer é somada com 1 por conta do index final.
+        console.log("ACCINDEX:", accIndex);
+        console.log("SUBTRACT LAYER:", subtractLayer);
+        const indexes = hoveredElement.accIndex.split('-');
+        // o index i do for somado com 1 indica a layer;
+        for (let i = 0; i < indexes.length; i++) {
+          let currentIndex = Number(indexes[i]);
+          // verifica se existe um subtract layer compatível com a layer atual atualiza o current index se o index for menor
+          if ((i+1) === subtractLayer && (index < currentIndex)) currentIndex -= 1;
+          if (i === 0) {
+            fatherRow = newItems;
+            father = newItems[currentIndex];
+          } else {
+            fatherRow = father.items;
+            father = father.items[currentIndex];
+          }
+          console.log("CURRENT INDEX: ", currentIndex);
+          console.log("FATHER ROW: ", fatherRow)
+          console.log("FATHER: ", father)
+        }
+        itemsToChange = father.items ?? null;
+      }
       switch (hoveredElement.hoverSide) {
         case 'left':
-          newItems = reOrderColumn(itemToReorder, newItems, hoveredElement.index, hoveredElement.columnIndex, 'left')
-          reSizeItems(newItems);
-          return;
+          if ( (father !== null) && father.type === 'column' ) {
+            addToColumn(itemsToChange, itemToRelocate, hoveredElement.index, 'left');
+          } else {
+            createColumn(itemsToChange, itemToRelocate, hoveredElement.index, 'left');
+          }
+          break;
         case 'right':
-          newItems = reOrderColumn(itemToReorder, newItems, hoveredElement.index, hoveredElement.columnIndex, 'right')
-          reSizeItems(newItems);
-          return;
+          if ( (father !== null) && father.type === 'column' ) {
+            addToColumn(itemsToChange, itemToRelocate, hoveredElement.index, 'right');
+          } else {
+            createColumn(itemsToChange, itemToRelocate, hoveredElement.index, 'right');
+          }
+          break;
         case 'top':
-          newIndex = Number(hoveredElement.columnIndex ?? hoveredElement.index);
-          newItems = addItemInPosition({...itemToReorder}, newItems, newIndex)
-          reSizeItems(newItems);
-          return;
+          if ( (father !== null) && father.type === 'column' ) {
+            const fatherIndex = hoveredElement.accIndex.split('-').pop();
+            itemToRelocate.width = fatherRow[fatherIndex].width;
+            addItemInPosition(fatherRow, itemToRelocate, (Number(fatherIndex)));
+            break;
+          }
+          itemToRelocate.width = itemsToChange[hoveredElement.index].width
+          addItemInPosition(itemsToChange, itemToRelocate, hoveredElement.index);
+          break;
         case 'bottom':
-          newIndex = Number(hoveredElement.columnIndex ?? hoveredElement.index);
-          if (newItems.length === items.length) newIndex += 1;
-          newItems = addItemInPosition({...itemToReorder}, newItems, newIndex)
-          reSizeItems(newItems);
-          return;
+          let addFactor = 1;
+          if ((accIndex === hoveredElement.accIndex) && (index < Number(hoveredElement.index))) addFactor = 0;
+          if ( (father !== null) && father.type === 'column' ) {
+            const fatherIndex = hoveredElement.accIndex.split('-').pop();
+            addItemInPosition(fatherRow, itemToRelocate, (Number(fatherIndex) + addFactor));
+            break;
+          }
+          addItemInPosition(itemsToChange, itemToRelocate, (Number(hoveredElement.index) + addFactor));
+          break;
+        case 'middle':
+          itemsToChange = itemsToChange[hoveredElement.index].items;
+          itemsToChange.push(itemToRelocate);
+          break;
         default:
           return;
       }
+      resizeTree(newItems);
+      setItems(newItems);
+      return;
+
+    } else {
+      // force redraw
+      setItems([]);
+      setItems(newItems);
     }
+    // add to new position based on hoveredelement
   }
 
   const renderColumnItems = (column, accIndex, column_width) => {
