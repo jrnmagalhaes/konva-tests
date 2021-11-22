@@ -295,7 +295,8 @@ const FormDrawer = ({optionDraged}) => {
           addItemInPosition(itemsToChange, itemToRelocate, (Number(hoveredElement.index) + addFactor));
           break;
         case 'middle':
-          itemsToChange = itemsToChange[hoveredElement.index].items;
+          console.log(itemsToChange);
+          itemsToChange = itemsToChange[ ((accIndex === hoveredElement.accIndex) && (index < Number(hoveredElement.index))) ? (Number(hoveredElement.index) - 1) : hoveredElement.index].items;
           itemsToChange.push(itemToRelocate);
           break;
         default:
