@@ -271,7 +271,7 @@ const FormDrawer = ({optionDraged}) => {
           if ( (father !== null) && father.type === 'column' ) {
             addToColumn(itemsToChange, itemToRelocate, hoveredElement.index, 'right');
           } else {
-            createColumn(itemsToChange, itemToRelocate, hoveredElement.index, 'right');
+            createColumn(itemsToChange, itemToRelocate, ((accIndex === hoveredElement.accIndex) && (index < Number(hoveredElement.index))) ? (Number(hoveredElement.index) - 1) : hoveredElement.index, 'right');
           }
           break;
         case 'top':
